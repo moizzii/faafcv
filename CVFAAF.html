@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fatima Usman — Portfolio</title>
+<meta name="description" content="Minimal single-file multi-page site with smooth 3D animations. Edit content inside the HTML." />
+
+<!--
+  Single-file SPA template
+  - All HTML/CSS/JS in one file
+  - 3D hero animation (CSS + JS parallax)
+  - Card hover 3D effect
+  - Smooth page transitions
+  - Color scheme variables at :root (edit to change theme)
+  - Navigation uses history API (friendly URLs)
+  - Edit "pages" in the <main> element or the PAGES array in the script
+-->
+
+<style>
+  :root{
+    --bg:#0f1724;           /* deep navy */
+    --panel:#0b1220;        /* dark panel */
+    --muted:#98a4b2;        /* muted text */
+    --accent:#00c2a8;       /* teal accent */
+    --accent-2:#ff6b6b;     /* coral accent */
+    --glass: rgba(255,255,255,0.04);
+    --glass-2: rgba(255,255,255,0.02);
+    --radius:12px;
+    --maxw:1100px;
+    --ease: cubic-bezier(.2,.9,.25,1);
+  }
+
+  /* Basic reset */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg,var(--bg), #07101a 80%);
+    color: #e6eef6;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    line-height:1.4;
+    padding:28px 18px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .site{
+    width:100%;
+    max-width: var(--maxw);
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:18px;
+  }
+
+  .brand{
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .logo{
+    width:48px;height:48px;border-radius:10px;
+    display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    box-shadow: 0 6px 20px rgba(0,0,0,.5);
+    font-weight:700;
+  }
+  .brand h1{font-size:1.05rem;margin:0;}
+  .brand p{margin:0;color:var(--muted);font-size:.85rem}
+
+  nav{
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+
+  .nav-btn{
+    background:transparent;
+    border:0;
+    color:var(--muted);
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:all .25s var(--ease);
+    font-weight:600;
+  }
+  .nav-btn:hover{color: #fff; transform:translateY(-2px); background:var(--glass)}
+  .nav-btn.active{color:var(--accent); box-shadow: inset 0 -2px 0 var(--accent); background:transparent}
+
+  /* layout */
+  .page-wrap{
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap:20px;
+    align-items:start;
+  }
+
+  main{
+    min-height:64vh;
+    background: linear-gradient(180deg,var(--glass),transparent);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow: 0 8px 30px rgba(2,6,12,.6);
+    overflow:hidden;
+  }
+
+  aside{
+    position:relative;
+    height:calc(64vh);
+    border-radius:var(--radius);
+    padding:18px;
+    background:linear-gradient(180deg,var(--panel), rgba(10,16,24,.5));
+    box-shadow: 0 6px 20px rgba(2,6,12,.6);
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  /* Hero 3D card */
+  .hero{
+    height:300px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    perspective:1200px;
+    margin-bottom:14px;
+  }
+  .card{
+    width:100%;
+    max-width:760px;
+    height:240px;
+    border-radius:14px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    padding:20px;
+    color: #eaf6f2;
+    transform-style:preserve-3d;
+    transition: transform .25s var(--ease);
+    display:flex;
+    gap:18px;
+    box-shadow: 0 30px 60px rgba(2,6,12,.6), 0 2px 6px rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.03);
+  }
+  .card .left{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .card h2{margin:0 0 6px 0;font-size:1.5rem}
+  .card p{margin:0;color:var(--muted)}
+  .card .cta{
+    margin-top:12px;
+    display:inline-block;
+    padding:10px 14px;
+    border-radius:10px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    color:#031018;
+    font-weight:700;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+    cursor:pointer;
+    transform:translateZ(40px); /* bring forward in 3D */
+  }
+
+  .card .visual{
+    width:200px;
+    height:200px;
+    margin-left:auto;
+    transform:translateZ(60px);
+    display:grid;place-items:center;
+  }
+  /* a simple pseudo 3d sphere with gradient */
+  .orb{
+    width:120px;height:120px;border-radius:999px;
+    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15), rgba(0,0,0,0.05) 40%), linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 18px 40px rgba(0,0,0,.6), inset 0 6px 20px rgba(255,255,255,0.03);
+    transform: rotateY(-20deg) rotateX(10deg);
+  }
+
+  /* content cards (grid) */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+    gap:14px;
+    margin-top:8px;
+  }
+  .panel{
+    background:var(--glass-2);
+    border-radius:12px;
+    padding:12px;
+    transition: transform .28s var(--ease), box-shadow .28s var(--ease);
+    transform-style:preserve-3d;
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .panel:hover{ transform: translateY(-6px) rotateX(4deg) rotateY(-4deg); box-shadow: 0 16px 40px rgba(2,6,12,.6) }
+
+  .muted{ color:var(--muted); font-size:0.92rem }
+
+  /* aside items */
+  .aside-title{ font-weight:700; color:var(--muted); font-size:.95rem }
+  .meta{ font-size:.92rem; color:var(--muted) }
+  .chip{ padding:8px 10px; border-radius:999px; background:rgba(255,255,255,0.03); font-weight:600; color:var(--accent); display:inline-block }
+
+  footer{ margin-top:14px; color:var(--muted); font-size:.85rem; text-align:center }
+
+  /* page transition */
+  .page {
+    opacity:0; transform: translateY(8px);
+    transition: all 320ms var(--ease);
+  }
+  .page.enter { opacity:1; transform:none; }
+
+  /* responsive */
+  @media (max-width:980px){
+    .page-wrap{grid-template-columns:1fr}
+    aside{height:auto}
+    .hero{height:220px}
+    .card{flex-direction:row; gap:10px}
+  }
+
+  /* prefers reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    .card, .panel, .grid, .page { transition: none !important; animation: none !important; transform: none !important }
+  }
+</style>
+</head>
+<body>
+  <div class="site" role="application">
+    <header>
+      <div class="brand" aria-hidden="false">
+        <div class="logo">FU</div>
+        <div>
+          <h1>Fatima Usman</h1>
+          <p class="muted">BS (Hons.) Psychology — King Edward Medical University</p>
+        </div>
+      </div>
+
+      <nav aria-label="Main navigation">
+        <button class="nav-btn" data-target="/" id="nav-home">Home</button>
+        <button class="nav-btn" data-target="/workshops" id="nav-work">Workshops</button>
+        <button class="nav-btn" data-target="/rotations" id="nav-rot">Rotations</button>
+        <button class="nav-btn" data-target="/contact" id="nav-contact">Contact</button>
+      </nav>
+    </header>
+
+    <div class="page-wrap" role="main">
+      <main id="root" aria-live="polite">
+        <!-- pages injected here by JS -->
+        <!-- default content present for noscript users -->
+        <article class="page enter" data-route="/">
+          <div class="hero" id="hero">
+            <div class="card" id="hero-card" aria-hidden="false">
+              <div class="left">
+                <h2>Clinical Psychology & Mental Health</h2>
+                <p class="muted">Clinical rotations in child, adult & addiction psychiatry; experienced in therapeutic interventions and counseling.</p>
+                <div class="cta" id="download">Download CV</div>
+              </div>
+              <div class="visual"><div class="orb" id="orb"></div></div>
+            </div>
+          </div>
+
+          <section class="grid" aria-label="Highlights">
+            <div class="panel">
+              <h3 style="margin:0 0 6px 0">Education</h3>
+              <div class="muted">BS (Hons.) Psychology — King Edward Medical University (2021–2025)</div>
+              <div style="height:8px"></div>
+              <div class="muted">F.Sc. Pre-Medical — Punjab College, Gujranwala (2019–2021)</div>
+            </div>
+
+            <div class="panel">
+              <h3 style="margin:0 0 6px 0">Clinical Rotations</h3>
+              <div class="muted">Mayo Hospital / KEMU — Child, Adult & Addiction Psychiatry (Jan–Jun 2025)</div>
+            </div>
+
+            <div class="panel">
+              <h3 style="margin:0 0 6px 0">Skills</h3>
+              <div class="muted">Therapeutic interventions · Counselling · Assessment · Patient communication</div>
+            </div>
+
+            <div class="panel">
+              <h3 style="margin:0 0 6px 0">Languages</h3>
+              <div class="muted">Urdu (Native) · English (Fluent)</div>
+            </div>
+          </section>
+        </article>
+      </main>
+
+      <aside aria-label="Profile & contact">
+        <div>
+          <div class="aside-title">Contact</div>
+          <div style="height:8px"></div>
+          <div class="meta">fatimausman@kemu.edu.pk</div>
+          <div class="meta">+92 311 7446977</div>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="aside-title">Availability</div>
+          <div style="height:8px"></div>
+          <div class="chip">Available for clinical placements & research</div>
+        </div>
+
+        <div style="margin-top:auto">
+          <footer>© <span id="year"></span> Fatima Usman — concise portfolio</footer>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script>
+/* ========== CONFIG ========== 
+   Pages list: adjust content in template below
+================================*/
+const PAGES = [
+  {
+    route: '/',
+    title: 'Home',
+    content: `
+
+    <article class="page" data-route="/">
+      <div class="hero" id="hero">
+        <div class="card" id="hero-card">
+          <div class="left">
+            <h2>Clinical Psychology & Mental Health</h2>
+            <p class="muted">Clinical rotations in child, adult & addiction psychiatry; experienced in therapeutic interventions and counseling.</p>
+            <div class="cta" id="download">Download CV</div>
+          </div>
+          <div class="visual"><div class="orb" id="orb-2"></div></div>
+        </div>
+      </div>
+
+      <section class="grid" aria-label="Highlights">
+        <div class="panel">
+          <h3 style="margin:0 0 6px 0">Education</h3>
+          <div class="muted">BS (Hons.) Psychology — King Edward Medical University (2021–2025)</div>
+          <div style="height:8px"></div>
+          <div class="muted">F.Sc. Pre-Medical — Punjab College, Gujranwala (2019–2021)</div>
+        </div>
+
+        <div class="panel">
+          <h3 style="margin:0 0 6px 0">Clinical Rotations</h3>
+          <div class="muted">Mayo Hospital / KEMU — Child, Adult & Addiction Psychiatry (Jan–Jun 2025)</div>
+        </div>
+
+        <div class="panel">
+          <h3 style="margin:0 0 6px 0">Skills</h3>
+          <div class="muted">Therapeutic interventions · Counselling · Assessment · Patient communication</div>
+        </div>
+
+        <div class="panel">
+          <h3 style="margin:0 0 6px 0">Languages</h3>
+          <div class="muted">Urdu (Native) · English (Fluent)</div>
+        </div>
+      </section>
+    </article>
+
+    `
+  },
+  {
+    route: '/workshops',
+    title: 'Workshops',
+    content: `
+    <article class="page" data-route="/workshops">
+      <h2 style="margin-top:0">Selected Workshops & Trainings</h2>
+      <div style="height:8px"></div>
+      <div class="panel" style="margin-bottom:10px">
+        <strong>15th International CBT Conference</strong>
+        <div class="muted">Treating Psychosexual Issues — Colin Hughes (Queen’s University Belfast) — May 2025</div>
+      </div>
+
+      <div class="panel" style="margin-bottom:10px">
+        <strong>Autism & Related Neurodevelopmental Disorders</strong>
+        <div class="muted">Child psychiatry practice — Dec 2023</div>
+      </div>
+
+      <div class="panel" style="margin-bottom:10px">
+        <strong>The Hand that Rocks the Cradle: Perinatal Mental Health</strong>
+        <div class="muted">Perinatal mental health workshop — Dec 2023</div>
+      </div>
+
+      <div class="panel" style="margin-bottom:10px">
+        <strong>Digital Detox & Clinician Digital Well-being</strong>
+        <div class="muted">Screen/internet addiction in children — Dec 2023–24</div>
+      </div>
+
+      <div class="panel" style="margin-bottom:10px">
+        <strong>National Conference on Mental Health</strong>
+        <div class="muted">Participation & sessions — 2024</div>
+      </div>
+    </article>
+    `
+  },
+  {
+    route: '/rotations',
+    title: 'Rotations',
+    content: `
+    <article class="page" data-route="/rotations">
+      <h2 style="margin-top:0">Clinical Rotations (Summary)</h2>
+      <div style="height:8px"></div>
+      <div class="panel">
+        <strong>Department of Psychiatry, Mayo Hospital / KEMU</strong>
+        <div class="muted">Jan 2025 – Jun 2025</div>
+        <div style="height:8px"></div>
+        <div class="muted">
+          • Child Psychiatry (2 months): history taking, family interviews, child assessment.<br>
+          • Adult Psychiatry (3 months): outpatient assessment, medication follow-up, case discussions.<br>
+          • Addiction Psychiatry (1 month): exposure to detox, rehabilitation and group sessions.
+        </div>
+      </div>
+    </article>
+    `
+  },
+  {
+    route: '/contact',
+    title: 'Contact',
+    content: `
+    <article class="page" data-route="/contact">
+      <h2 style="margin-top:0">Contact & Availability</h2>
+      <div style="height:8px"></div>
+      <div class="panel">
+        <div class="muted"><strong>Email:</strong> fatimausman@kemu.edu.pk</div>
+        <div class="muted"><strong>Phone:</strong> +92 311 7446977</div>
+        <div style="height:8px"></div>
+        <div class="muted">Available for clinical placements, research collaborations, and short-term workshops.</div>
+      </div>
+    </article>
+    `
+  }
+];
+
+/* ========== tiny SPA router ========== */
+const root = document.getElementById('root');
+const navButtons = document.querySelectorAll('.nav-btn');
+
+function setActiveNav(route){
+  navButtons.forEach(b=>{
+    b.classList.toggle('active', b.dataset.target === route);
+  });
+}
+
+function renderRoute(path, push=true){
+  const page = PAGES.find(p=>p.route===path) || PAGES[0];
+  // simple fade/slide animation: remove existing pages then inject
+  root.querySelectorAll('.page').forEach(n=>n.remove());
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = page.content;
+  const pageNode = wrapper.firstElementChild;
+  pageNode.classList.add('page');
+  root.appendChild(pageNode);
+  // force reflow then add enter
+  requestAnimationFrame(()=> pageNode.classList.add('enter'));
+  document.title = `${page.title} — Fatima Usman`;
+  setActiveNav(page.route);
+  if(push) history.pushState({route:page.route}, '', page.route);
+  // attach small interactions (download etc)
+  attachInteractions();
+}
+
+function attachInteractions(){
+  const dl = document.getElementById('download');
+  if(dl){
+    dl.onclick = ()=> {
+      // point to your uploaded CV file (make sure it's in /cv/ folder)
+      const a = document.createElement('a');
+      a.href = "cv/Fatima-Usman-CV.pdf"; 
+      a.download = "Fatima-Usman-CV.pdf"; // forces download
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+}
+
+/* Navigation binding */
+navButtons.forEach(b=>{
+  b.addEventListener('click', ()=> renderRoute(b.dataset.target, true));
+});
+
+/* handle back/forward */
+window.onpopstate = (e)=>{
+  const route = (e.state && e.state.route) || location.pathname || '/';
+  renderRoute(route, false);
+}
+
+/* start on current path */
+renderRoute(location.pathname === '/' ? '/' : location.pathname, false);
+
+/* small 3D parallax for hero */
+function heroLoop(){
+  const hero = document.getElementById('hero') || document.querySelector('.hero');
+  const card = document.getElementById('hero-card') || document.querySelector('.card');
+  const orb = document.getElementById('orb') || document.querySelector('.orb');
+  if(!hero || !card) return;
+  let lastX=0, lastY=0;
+  function onMove(e){
+    const rect = hero.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const px = ( (e.clientX || (e.touches && e.touches[0].clientX)) - cx ) / rect.width;
+    const py = ( (e.clientY || (e.touches && e.touches[0].clientY)) - cy ) / rect.height;
+    lastX = px; lastY = py;
+  }
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchmove', onMove, {passive:true});
+  let rafId;
+  function frame(){
+    // rotate card subtly
+    const rx = lastY * 8; // tilt x
+    const ry = lastX * -12; // rotate y
+    card.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
+    if(orb) orb.style.transform = `rotateY(${ry*1.5}deg) rotateX(${rx*0.6}deg)`;
+    rafId = requestAnimationFrame(frame);
+  }
+  frame();
+  // stop if user prefers reduced motion
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if(mq.matches){ cancelAnimationFrame(rafId); window.removeEventListener('mousemove', onMove); }
+}
+setTimeout(heroLoop, 300);
+
+/* small helpers */
+document.getElementById('year').textContent = new Date().getFullYear();
+
+/* Accessibility: keyboard nav for nav buttons */
+navButtons.forEach((b, i) => {
+  b.setAttribute('tabindex', '0');
+  b.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); }
+    if(e.key === 'ArrowRight') navButtons[(i+1)%navButtons.length].focus();
+    if(e.key === 'ArrowLeft') navButtons[(i-1+navButtons.length)%navButtons.length].focus();
+  });
+});
+</script>
+</body>
+</html>
+
